@@ -11,7 +11,7 @@ namespace octet {
     ref<visual_scene> app_scene;
   public:
     /// this is called when we construct the class before everything is initialised.
-    example_ping(int argc, char **argv) : app(argc, argv) {
+    example_ping(int argc, char **argv) : app(argc, argv) { 
     }
 
     /// this is called once OpenGL is initialized
