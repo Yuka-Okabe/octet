@@ -12,7 +12,7 @@ namespace octet {
   public:
     /// this is called when we construct the class before everything is initialised.
     example_ping(int argc, char **argv) : app(argc, argv) { 
-    }
+    } 
 
     /// this is called once OpenGL is initialized
     void app_init() {
