@@ -20,9 +20,9 @@
 // note that the spaces go together like dominos.
 //
 // The inverse of the matrix transforms the other way. so inverse4x4(modelToWorld) == worldToModel
-//
+//???mat4..?????matrix????????mat??????
 namespace octet { namespace math {
-  /// 4x4 Matrix class
+  /// 4x4 Matrix class????????????[16]???????????????
   class mat4t {
     // these vectors are the x, y, z, w components. w is the translation.
     vec4 v[4];
@@ -30,6 +30,7 @@ namespace octet { namespace math {
   public:
     /// Construct an identity matrix
     mat4t() {
+		//vector4data????????????
       OCTET_VEC4_CONST(v0, 1, 0, 0, 0)
       OCTET_VEC4_CONST(v1, 0, 1, 0, 0)
       OCTET_VEC4_CONST(v2, 0, 0, 1, 0)

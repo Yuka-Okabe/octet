@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+﻿////////////////////////////////////////////////////////////////////////////////
 //
 // (C) Andy Thomason 2012-2014
 //
@@ -16,7 +16,7 @@
 //   Texture loaded from GIF file
 //   Audio
 //
-
+//namespaceはライブラリの中の変数と名前が被らないようにする処理だよ。呼び出すときは int octet::hoge(){}とかしてあげるよ
 namespace octet {
   class sprite {
     // where is our sprite (overkill for a 2D game!)
@@ -36,9 +36,8 @@ namespace octet {
   public:
     sprite() {
       texture = 0;
-      enabled = true;
-    }
-
+     }
+	//クリッピングに沿った初期化を行う。mat4のmodelToWorldは世界という理解でいいのかな。本当はMatrix-行列な気もする　。
     void init(int _texture, float x, float y, float w, float h) {
       modelToWorld.loadIdentity();
       modelToWorld.translate(x, y, 0);
@@ -47,7 +46,7 @@ namespace octet {
       texture = _texture;
       enabled = true;
     }
-
+	//忘れてたけど＆はポインタであった。OpenGlのしぇーだを使ったクラスでなんかしとる
     void render(texture_shader &shader, mat4t &cameraToWorld) {
       // invisible sprite... used for gameplay.
       if (!texture) return;
@@ -57,12 +56,13 @@ namespace octet {
       mat4t modelToProjection = mat4t::build_projection_matrix(modelToWorld, cameraToWorld);
 
       // set up opengl to draw textured triangles using sampler 0 (GL_TEXTURE0)
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, texture);
+      glActiveTexture(GL_TEXTURE0);//named texture
+      glBindTexture(GL_TEXTURE_2D, texture);//target, GLuint texture
 
       // use "old skool" rendering
       //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
       //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	  //(ターゲット、ネーム、パラメータ)
       shader.render(modelToProjection, 0);
 
       // this is an array of the positions of the corners of the sprite in 3D
@@ -144,23 +144,23 @@ namespace octet {
     // shader to draw a textured triangle
     texture_shader texture_shader_;
 
-    enum {
+    enum {//整数が割り振られるenumさん。それぞれここでまとめて宣言してます
       num_sound_sources = 8,
-      num_rows = 5,
-      num_cols = 10,
+      num_rows = 1,//originally 5 インベーダーの数な
+      num_cols = 8,//originally 10 
       num_missiles = 2,
       num_bombs = 2,
       num_borders = 4,
       num_invaderers = num_rows * num_cols,
 
       // sprite definitions
-      ship_sprite = 0,
-      game_over_sprite,
+      ship_sprite = 0,//船
+      game_over_sprite,//ゲームオーバー
 
-      first_invaderer_sprite,
-      last_invaderer_sprite = first_invaderer_sprite + num_invaderers - 1,
+      first_invaderer_sprite,//最初の敵
+      last_invaderer_sprite = first_invaderer_sprite + num_invaderers - 1,//
 
-      first_missile_sprite,
+      first_missile_sprite,//
       last_missile_sprite = first_missile_sprite + num_missiles - 1,
 
       first_bomb_sprite,
@@ -169,20 +169,20 @@ namespace octet {
       first_border_sprite,
       last_border_sprite = first_border_sprite + num_borders - 1,
 
-      num_sprites,
+      num_sprites,//スプライトの総数
 
     };
 
     // timers for missiles and bombs
-    int missiles_disabled;
+    int missiles_disabled;//時間管理ミサイルとボムは一定時間たったら消えるってことか？
     int bombs_disabled;
 
     // accounting for bad guys
-    int live_invaderers;
-    int num_lives;
+    int live_invaderers;//残機
+    int num_lives;//最初の残機、３かな？
 
     // game state
-    bool game_over;
+    bool game_over;//ゲームオーバー状態 。　タイトル、ボスstateもつくれるはず
     int score;
 
     // speed of enemy
@@ -198,34 +198,34 @@ namespace octet {
     sprite sprites[num_sprites];
 
     // random number generator
-    class random randomizer;
+    class random randomizer;//どの敵が発射するかはランダムらしい
 
     // a texture for our text
-    GLuint font_texture;
+    GLuint font_texture;//フォントにもテクスチャがいるのか。。
 
     // information for our text
-    bitmap_font font;
+    bitmap_font font;//これは変えられそうである
 
     ALuint get_sound_source() { return sources[cur_source++ % num_sound_sources]; }
 
-    // called when we hit an enemy
+    // called when we hit an enemy　//弾が敵にあたったら
     void on_hit_invaderer() {
       ALuint source = get_sound_source();
       alSourcei(source, AL_BUFFER, bang);
-      alSourcePlay(source);
+      alSourcePlay(source);//ここまでsoundの処理
 
       live_invaderers--;
       score++;
       if (live_invaderers == 4) {
-        invader_velocity *= 4;
+        invader_velocity *= 1;//originally4
       } else if (live_invaderers == 0) {
         game_over = true;
-        sprites[game_over_sprite].translate(-20, 0);
+        sprites[game_over_sprite].translate(-20, 0);//originally -20,0 Left & 
       }
     }
 
-    // called when we are hit
-    void on_hit_ship() {
+    // called when we are hit //
+    void on_hit_ship() {//弾をくらったら
       ALuint source = get_sound_source();
       alSourcei(source, AL_BUFFER, bang);
       alSourcePlay(source);
@@ -236,35 +236,49 @@ namespace octet {
       }
     }
 
-    // use the keyboard to move the ship
-    void move_ship() {
-      const float ship_speed = 0.05f;
-      // left and right arrows
-      if (is_key_down(key_left)) {
-        sprites[ship_sprite].translate(-ship_speed, 0);
-        if (sprites[ship_sprite].collides_with(sprites[first_border_sprite+2])) {
-          sprites[ship_sprite].translate(+ship_speed, 0);
-        }
-      } else if (is_key_down(key_right)) {
-        sprites[ship_sprite].translate(+ship_speed, 0);
-        if (sprites[ship_sprite].collides_with(sprites[first_border_sprite+3])) {
-          sprites[ship_sprite].translate(-ship_speed, 0);
-        }
-      }
+    // use the keyboard to move the ship//船動かす
+	void move_ship() {
+		const float ship_speed = 0.07f;
+		// left and right arrows
+		if (is_key_down(key_left)) {
+			sprites[ship_sprite].translate(-ship_speed, 0);
+			if (sprites[ship_sprite].collides_with(sprites[first_border_sprite + 2])) {
+				sprites[ship_sprite].translate(+ship_speed, 0);
+			}
+		}
+		else if (is_key_down(key_right)) {
+			sprites[ship_sprite].translate(+ship_speed, 0);
+			if (sprites[ship_sprite].collides_with(sprites[first_border_sprite + 3])) {
+				sprites[ship_sprite].translate(-ship_speed, 0);
+			}
+		}
+		else if (is_key_down(key_up)) {
+			sprites[ship_sprite].translate(0, +ship_speed);
+			if (sprites[ship_sprite].collides_with(sprites[first_border_sprite + 1  ])) {
+				sprites[ship_sprite].translate(0, -ship_speed);
+			}
+		}
+		else if (is_key_down(key_down)) {
+			sprites[ship_sprite].translate(0, -ship_speed);
+			if (sprites[ship_sprite].collides_with(sprites[first_border_sprite + 0])) {
+				sprites[ship_sprite].translate(0, +ship_speed);
+			}
+		}
     }
 
     // fire button (space)
     void fire_missiles() {
       if (missiles_disabled) {
-        --missiles_disabled;
-      } else if (is_key_going_down(' ')) {
+        --missiles_disabled;//TrueをFalseにしてるのかな？以下は５フレームに一回実行される
+      } else if (is_key_going_down(' ')) {//キー操作で船が弾うつ
         // find a missile
         for (int i = 0; i != num_missiles; ++i) {
-          if (!sprites[first_missile_sprite+i].is_enabled()) {
-            sprites[first_missile_sprite+i].set_relative(sprites[ship_sprite], 0, 0.5f);
-            sprites[first_missile_sprite+i].is_enabled() = true;
-            missiles_disabled = 5;
-            ALuint source = get_sound_source();
+          if (!sprites[first_missile_sprite+i].is_enabled()) {//ミサイルがdisableだったら
+            sprites[first_missile_sprite+i].set_relative(sprites[ship_sprite], 0, 0.5f);//船の位置に移動させて
+            sprites[first_missile_sprite+i].is_enabled() = true;//enableにする。これでmove_misileがオンになるわけだな
+            missiles_disabled = 3;//5フレームの間うてないと
+
+            ALuint source = get_sound_source();//sound
             alSourcei(source, AL_BUFFER, whoosh);
             alSourcePlay(source);
             break;
@@ -274,7 +288,7 @@ namespace octet {
     }
 
     // pick and invader and fire a bomb
-    void fire_bombs() {
+    void fire_bombs() {//インベーダーが弾うつ
       if (bombs_disabled) {
         --bombs_disabled;
       } else {
@@ -289,6 +303,7 @@ namespace octet {
                 sprites[first_bomb_sprite+i].set_relative(invaderer, 0, -0.25f);
                 sprites[first_bomb_sprite+i].is_enabled() = true;
                 bombs_disabled = 30;
+
                 ALuint source = get_sound_source();
                 alSourcei(source, AL_BUFFER, whoosh);
                 alSourcePlay(source);
@@ -305,16 +320,16 @@ namespace octet {
     void move_missiles() {
       const float missile_speed = 0.3f;
       for (int i = 0; i != num_missiles; ++i) {
-        sprite &missile = sprites[first_missile_sprite+i];
+        sprite &missile = sprites[first_missile_sprite+i];//弾をスプライトで用意
         if (missile.is_enabled()) {
-          missile.translate(0, missile_speed);
+          missile.translate(0, missile_speed);//+Y方向に動かす
           for (int j = 0; j != num_invaderers; ++j) {
             sprite &invaderer = sprites[first_invaderer_sprite+j];
             if (invaderer.is_enabled() && missile.collides_with(invaderer)) {
-              invaderer.is_enabled() = false;
+              invaderer.is_enabled() = false;//ぶつかったらfalseにして画面外に追い出す
               invaderer.translate(20, 0);
               missile.is_enabled() = false;
-              missile.translate(20, 0);
+              missile.translate(20, 0);//ミサイルもgalseにして画面外に追い出す
               on_hit_invaderer();
 
               goto next_missile;
@@ -505,7 +520,7 @@ namespace octet {
     }
 
     // this is called to draw the world
-    void draw_world(int x, int y, int w, int h) {
+    void   (int x, int y, int w, int h) {
       simulate();
 
       // set a viewport - includes whole window area
