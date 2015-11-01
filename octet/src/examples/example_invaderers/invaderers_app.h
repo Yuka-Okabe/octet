@@ -286,8 +286,6 @@ namespace octet {
 			  --missiles_disabled;
 		  }
 		  else if (is_key_going_down(' ')) {
-			  printf("space pushed\n");
-
 			  // find a missile
 			  for (int i = 0; i != num_missiles; ++i) {
 				  if (!sprites[first_missile_sprite + i].is_enabled()) {
@@ -420,14 +418,16 @@ namespace octet {
 		  else
 		  {
 			  printf("called");
-			  for (int i = 0; i != num_explosions*num_explosionsAnim; ++i) {
-				  sprite &explosion = sprites[first_explosion_sprite + i];
-				  if (explosion.is_enabled()) {
-					  sprites[first_explosion_sprite + i].translate(20, 0);
-					  // sprites[first_explosion_sprite + i*currentExplosion + j].is_enabled() = true; 
-				  }
+			  if (counter >= num_explosions) {
+				  counter = 0;
 			  }
-			  explosion_change = 3;
+			  for (int i = 0; i != num_explosions; ++i) {
+				  sprite &explosion = sprites[first_explosion_sprite + i*num_explosionsAnim];
+	
+					  sprites[first_explosion_sprite + i*num_explosionsAnim + counter].translate(20, 0);
+			  }
+			  counter++;
+			  explosion_change = 0;
 		  }
 		  }
 
