@@ -414,40 +414,22 @@ namespace octet {
 	  }
 	  //animate the explosion
 	  void anim_explosion() {
-		  /*
-		  for (int i = 0; i != num_explosions; ++i) {
-			  sprite &explosion = sprites[first_explosion_sprite + i*num_explosionsAnim];
-			  if (explosion.is_enabled()) {
-				  for (int j = 0; j != num_explosionsAnim; j++) {
-					  sprites[first_explosion_sprite + i*currentExplosion + j].set_relative(killed_invaderer_sprite, 0, 0);
-					  sprites[first_explosion_sprite + i*currentExplosion + j].is_enabled() = true; 
-					  }		  
-			  }
-		  }
-	*/
-	}
-
-	  void explosion_checker(int num) {
-		  for (int i = 0; i != num_explosionsAnim; ++i) {
-			  sprite &explosion = sprites[num + i];
-			  explosion.is_enabled() = false;
-		  }
-		  /*if (explosion_change) {
+		  if (explosion_change) {
 			  explosion_change--;
 		  }
-		  else {
-			  for (int i = 0; i != num_explosionsAnim*num_explosions; ++i) {
+		  else
+		  {
+			  printf("called");
+			  for (int i = 0; i != num_explosions*num_explosionsAnim; ++i) {
 				  sprite &explosion = sprites[first_explosion_sprite + i];
-				  //if (explosion.is_enabled()) {
-				 // explosion.is_enabled() = false;
-				  explosion.translate(0.01, 0.01);
-				  //}
+				  if (explosion.is_enabled()) {
+					  sprites[first_explosion_sprite + i].translate(20, 0);
+					  // sprites[first_explosion_sprite + i*currentExplosion + j].is_enabled() = true; 
+				  }
 			  }
-			  explosion_change = 8;
+			  explosion_change = 3;
 		  }
-	  */
-	  }
-     
+		  }
 
     // check if any invaders hit the sides.
     bool invaders_collide(sprite &border) {
