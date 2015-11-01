@@ -148,7 +148,7 @@ namespace octet {
 		  num_sound_sources = 8,
 		  num_rows = 5,
 		  num_cols = 10,
-		  num_missiles = 2,
+		  num_missiles = 12,
 		  num_bombs = 2,
 		  num_borders = 4,
 		  num_invaderers = num_rows * num_cols,
@@ -197,6 +197,7 @@ namespace octet {
 	  // game state
 	  bool game_over;
 	  int score;
+	  bool missile_trigger;
 
 	  // speed of enemy
 	  float invader_velocity;
@@ -282,20 +283,35 @@ namespace octet {
 
 	  // fire button (space)
 	  void fire_missiles() {
+		  if (is_key_going_down(' ')) {
+			  printf("down\n");
+			  missile_trigger = true;
+		  }  
+	  }
+	  void stop_missiles() {
+		  if (is_key_going_up(' ')) {
+			  printf("up\n");
+			  missile_trigger = true;
+		  }
+	  }
+
+	  void fire_missiles_on() {
 		  if (missiles_disabled) {
 			  --missiles_disabled;
 		  }
-		  else if (is_key_going_down(' ')) {
-			  // find a missile
-			  for (int i = 0; i != num_missiles; ++i) {
-				  if (!sprites[first_missile_sprite + i].is_enabled()) {
-					  sprites[first_missile_sprite + i].set_relative(sprites[ship_sprite], 0, 0.5f);
-					  sprites[first_missile_sprite + i].is_enabled() = true;
-					  missiles_disabled = 5;
-					  ALuint source = get_sound_source();
-					  alSourcei(source, AL_BUFFER, whoosh);
-					  alSourcePlay(source);
-					  break;
+		  else {
+			  //printf("fire\n");
+			  if (missile_trigger) {
+				  for (int i = 0; i != num_missiles; ++i) {
+					  if (!sprites[first_missile_sprite + i].is_enabled()) {
+						  sprites[first_missile_sprite + i].set_relative(sprites[ship_sprite], 0, 0.5f);
+						  sprites[first_missile_sprite + i].is_enabled() = true;
+						  missiles_disabled = 4;
+						  ALuint source = get_sound_source();
+						  alSourcei(source, AL_BUFFER, whoosh);
+						  alSourcePlay(source);
+						  break;
+					  }
 				  }
 			  }
 		  }
@@ -417,7 +433,7 @@ namespace octet {
 		  }
 		  else
 		  {
-			  printf("called");
+			 // printf("called");
 			  if (counter >= num_explosions) {
 				  counter = 0;
 			  }
@@ -569,6 +585,8 @@ namespace octet {
       score = 0;
 	  counter = 0;
 	  currentExplosion = 0;
+	  missile_trigger = false;
+
     }
 
     // called every frame to move things
@@ -581,6 +599,10 @@ namespace octet {
 
       fire_missiles();
 
+	  stop_missiles();
+
+	  fire_missiles_on();
+
       fire_bombs();
 
       move_missiles();
@@ -590,6 +612,10 @@ namespace octet {
       move_invaders(invader_velocity, 0);
 
 	  anim_explosion();
+
+	  
+
+
  
 	  //explosion_checker();
 
