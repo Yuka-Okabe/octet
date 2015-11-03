@@ -48,6 +48,10 @@ namespace octet {
       enabled = true;
     }
 
+	void set_texture(int _texture) {               //THIS IS FOR CHANGING THE TEXTURES
+		texture = _texture;
+	} //added to do: wanna change or delate
+
     void render(texture_shader &shader, mat4t &cameraToWorld) {
       // invisible sprite... used for gameplay.
       if (!texture) return;
@@ -149,12 +153,12 @@ namespace octet {
 		  num_bigstar = 10,
 		  num_middlestar = 15,
 		  num_smallstar = 20,
-		  num_rows = 5,
-		  num_cols = 10,
+		 // num_rows = 5,
+		  //num_cols = 10,
 		  num_missiles = 12,
 		  num_bombs = 2,
 		  num_borders = 4,
-		  num_invaderers = num_rows * num_cols,
+		 // num_invaderers = num_rows * num_cols,
 		  num_explosionsAnim = 8,
 		  num_explosions = 8,
 
@@ -164,8 +168,7 @@ namespace octet {
 		  ship_sprite = 0,
 
 
-		  game_over_sprite,
-		  game_clear_sprite,
+		 
 
 		  first_bigstar_sprite,
 		  last_bigstar_sprite = first_bigstar_sprite + num_bigstar - 1,
@@ -176,8 +179,9 @@ namespace octet {
 		  first_smallstar_sprite,
 		  last_smallstar_sprite = first_smallstar_sprite + num_smallstar - 1,
 
-		  first_invaderer_sprite,
-		  last_invaderer_sprite = first_invaderer_sprite + num_invaderers - 1,
+		//  first_invaderer_sprite,
+		//  last_invaderer_sprite = first_invaderer_sprite + num_invaderers - 1,
+		  test_sprite,
 
 		  first_missile_sprite,
 		  last_missile_sprite = first_missile_sprite + num_missiles - 1,
@@ -188,10 +192,15 @@ namespace octet {
 		  first_border_sprite,
 		  last_border_sprite = first_border_sprite + num_borders - 1,
 
+		  black_sprite,
+
 		  first_explosion_sprite,
 		  last_explosion_sprite = first_explosion_sprite + num_explosionsAnim*num_explosions - 1,
 
+		  game_over_sprite,
+		  game_clear_sprite,
 		  title_sprite,
+		  complete_sprite,
 
 
 		  num_sprites,
@@ -210,7 +219,7 @@ namespace octet {
 	  int startDisabled;
 	  int startTimeCatcher;
 
-	  //bool for explosion
+	  //bool for triggers
 	  bool explosion_trigger;
 
 	  // accounting for bad guys
@@ -222,10 +231,11 @@ namespace octet {
 	  bool game_clear;
 	  bool game_title;
 	  bool game_play;
+	  bool game_complete;
 
 	  long int score;
-	  int stage;
-	  bool missile_trigger;
+	 // int stage;
+	 
 
 	  // speed of enemy
 	  float invader_velocity;
@@ -239,7 +249,9 @@ namespace octet {
 	  ALuint end;
 	  unsigned cur_source;
 	  ALuint sources[num_sound_sources];
-
+	  
+	  sprite heart[5];
+	  dynarray<sprite> inv_sprites;
 	  // big array of sprites
 	  sprite sprites[num_sprites];
 
@@ -252,11 +264,28 @@ namespace octet {
 	  // information for our text
 	  bitmap_font font;
 
+	  // stores current level
+//	  int current_level = 0;
+	  int stage;
+	  static const int MAX_NR_LVL = 5;
+
+	  struct inv_position {
+		  int x;
+		  int y;
+	  };
+
+	  inv_position current_invader_position;
+
+	  dynarray<inv_position> inv_formation;
+
 	  ALuint get_sound_source() { return sources[cur_source++ % num_sound_sources]; }
 
-	  //title to game play when enter space. Also make delay to start.
+	  //start to play when enter f5. Also make delay to start.
 	  void game_start() {
+		 // printf("game_start\n");
+		  
 		  if (game_play) {
+			  sprites[title_sprite].translate(20, 0);
 			  return;
 		  }
 		  else
@@ -266,9 +295,11 @@ namespace octet {
 		  }
 		  if (is_key_down(key_f5)) {
 			  startTimeCatcher = startDisabled;
-			  ALuint source = get_sound_source();
-			  alSourcei(source, AL_BUFFER, begin);
-			  alSourcePlay(source);
+			  if (game_complete != true) {
+				  ALuint source = get_sound_source();
+				  alSourcei(source, AL_BUFFER, begin);
+				  alSourcePlay(source);
+			  }
 		  }
 		  if (startTimeCatcher - 1 == startDisabled) {
 			  if (game_over) {
@@ -277,21 +308,21 @@ namespace octet {
 			  if (game_clear) {
 				  float inherit_velocity = abs(invader_velocity);
 				  int inherit_score = score;
-				  int inherit_stage = stage;
 				  int inherit_lives = num_lives;
-				  app_init();
+				  app_init();//?????????????????????????????????
 				  invader_velocity = inherit_velocity + 0.01f;
 				  score = inherit_score + stage * 500*stage;
-				  stage = inherit_stage + 1;
 				  num_lives = inherit_lives;
+				  printf("stage clear\n");
+				
+					 // load_next_level();
+				  
 			  }
 			  game_title = false;
 			  game_clear = false;
 			  game_over = false;
 
-			  sprites[title_sprite].translate(20, 0);
-			  sprites[game_clear_sprite].translate(20, 0);
-			  sprites[game_over_sprite].translate(20, 0);
+			
 			  game_play = true;
 			  startTimeCatcher = 0;
 			  startDisabled = 0;
@@ -300,26 +331,36 @@ namespace octet {
 
 	  // called when we hit an enemy
 	  void on_hit_invaderer() {
+		  printf("onHitInv\n");
 		  ALuint source = get_sound_source();
 		  alSourcei(source, AL_BUFFER, bang);
 		  alSourcePlay(source);
 
 		  live_invaderers--;
 		  score = score + 20;
-		  if (live_invaderers == 4) {
-			 // invader_velocity *= 4;
-		  }
-		  else if (live_invaderers == 0) {
+	
+		 if (live_invaderers == 0) {
+
+			 if (stage >= MAX_NR_LVL) {
+				 sprites[complete_sprite].translate(-20, 0);
+				 game_play = false;
+				 game_complete = true;
+	
+				 return;
+			 }
+
 			  game_play = false;
 			  game_clear = true;
 			  sprites[game_clear_sprite].translate(-20, 0);
+			  
+			  printf("stage clear!!\n");
 
 			  ALuint source = get_sound_source();
 			  alSourcei(source, AL_BUFFER, begin);
 			  alSourcePlay(source);
 		  }
 	  }
-
+	 
 	  // called when we are hit
 	  void on_hit_ship() {
 
@@ -347,6 +388,7 @@ namespace octet {
 	  void auto_move_ship() {
 		  if (autoMove_abled) {
 			  sprites[ship_sprite].translate(0, 0.05f);
+			
 			  autoMove_abled--;
 		  }
 	  }
@@ -418,8 +460,8 @@ namespace octet {
 			  }
 		  }
 		  //ship dies if it collides enemy 
-		  for (int i = 0; i != num_invaderers; i++) {
-			  sprite &invaderer = sprites[first_invaderer_sprite + i];
+		  for (int i = 0; i != inv_sprites.size(); i++) {
+			  sprite &invaderer = inv_sprites[i];
 			  sprite &ship = sprites[ship_sprite];
 			  if (invaderer.is_enabled() && ship.collides_with(invaderer)) {
 				  on_hit_ship();
@@ -465,8 +507,8 @@ namespace octet {
 		  else {
 			  // find an invaderer
 			  sprite &ship = sprites[ship_sprite];
-			  for (int j = randomizer.get(0, num_invaderers); j < num_invaderers; ++j) {
-				  sprite &invaderer = sprites[first_invaderer_sprite + j];
+			  for (int j = randomizer.get(0, inv_sprites.size()); j < inv_sprites.size(); ++j) {
+				  sprite &invaderer = inv_sprites[j];//inv_sprites.size() inv_sprites[j];
 				  if (invaderer.is_enabled() && invaderer.is_above(ship, 0.3f)) {
 					  // find a bomb
 					  for (int i = 0; i != num_bombs; ++i) {
@@ -493,13 +535,13 @@ namespace octet {
 			  sprite &missile = sprites[first_missile_sprite + i];
 			  if (missile.is_enabled()) {
 				  missile.translate(0, missile_speed);
-				  for (int j = 0; j != num_invaderers; ++j) {
-					  sprite &invaderer = sprites[first_invaderer_sprite + j];
+				  for (int j = 0; j != inv_sprites.size(); ++j) {
+					  sprite &invaderer = inv_sprites[j];
 					  sprite &ship = sprites[ship_sprite];
 
 					  if (invaderer.is_enabled() && missile.collides_with(invaderer)) {
 						  printf("collide\n");
-						  killed_invaderer_sprite = sprites[first_invaderer_sprite + j];
+						  killed_invaderer_sprite = inv_sprites[j];
 						  invaderer.is_enabled() = false;
 						  invaderer.translate(20, 0);
 						  missile.is_enabled() = false;
@@ -562,8 +604,8 @@ namespace octet {
 
 	  // move the array of enemies
 	  void move_invaders(float dx, float dy) {
-		  for (int j = 0; j != num_invaderers; ++j) {
-			  sprite &invaderer = sprites[first_invaderer_sprite + j];
+		  for (int j = 0; j != inv_sprites.size(); ++j) {
+			  sprite &invaderer = inv_sprites[j];
 			  if (invaderer.is_enabled()) {
 				  invaderer.translate(dx, dy);
 			  }
@@ -592,8 +634,8 @@ namespace octet {
 
 	  // check if any invaders hit the sides.
 	  bool invaders_collide(sprite &border) {
-		  for (int j = 0; j != num_invaderers; ++j) {
-			  sprite &invaderer = sprites[first_invaderer_sprite + j];
+		  for (int j = 0; j != inv_sprites.size(); ++j) {
+			  sprite &invaderer = inv_sprites[j];
 			  if (invaderer.is_enabled() && invaderer.collides_with(border)) {
 				  return true;
 			  }
@@ -652,19 +694,29 @@ namespace octet {
 
 		  font_texture = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
 
-		  GLuint title = resource_dict::get_texture_handle(GL_RGB, "#assets/invaderers/title.gif");
-		  sprites[title_sprite].init(title, 0, 0, 6, 6);
+		  GLuint title = resource_dict::get_texture_handle(GL_RGB, "#assets/invaderers/title2.gif");
+		  sprites[title_sprite].init(title, 0, 0, 3, 3);
+
+		  GLuint complete = resource_dict::get_texture_handle(GL_RGB, "#assets/invaderers/complete.gif");
+		  sprites[complete_sprite].init(complete, 20, 0, 6, 6);
 
 		  GLuint ship = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/ship.gif");
 		  sprites[ship_sprite].init(ship, 0, -2.75f, 0.25f, 0.25f);
 
 		  GLuint GameOver = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/GameOver.gif");
-		  sprites[game_over_sprite].init(GameOver, 20, 0, 3, 1.5f);
+		  sprites[game_over_sprite].init(GameOver, 20, 0, 2.5f, 2.5f);
 
 		  GLuint GameClear = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/GameClear.gif");
-		  sprites[game_clear_sprite].init(GameClear, 20, 0, 3, 1.5f);
+		  sprites[game_clear_sprite].init(GameClear, 20, 0, 2.5f, 2.5f);
+		  /*
+				GLuint Heart = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/heart.gif");
+				sprite heart_sprite;
+					heart[2].init(Heart, 0, 0, 0.2f, 0.2f);
+			  */
+			  // // big array of sprites
+	 // sprite sprites[num_sprites];
 
-
+		  /*
 
 		  GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
 		  for (int j = 0; j != num_rows; ++j) {
@@ -676,6 +728,30 @@ namespace octet {
 			  }
 		  }
 
+		  */
+		  /*
+		  read_file(); //
+		  inv_sprites.resize(0);
+		  for (int i = 0; i < inv_formation.size(); ++i) {
+			  printf("inv_formation%d x = %d y = %d \n", i, inv_formation[i].x, inv_formation[i].y);
+		  }
+		  GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
+		  for (int i = 0; i < inv_formation.size(); ++i) {
+			  printf("formationsize = %d",inv_formation.size());
+			  sprite inv;
+			  inv.init(invaderer, -1.5f + 0.66f*inv_formation[i].x, 2 - 0.5f*inv_formation[i].y, 0.25f, 0.25f);
+			  inv_sprites.push_back(inv);
+		  }
+		  */
+		  if (stage <1 || stage > MAX_NR_LVL) {
+			  printf("stage = 0");
+			  stage = 0;
+		  }
+		  load_next_level();
+		  /*
+		  GLuint invtest = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
+		  sprites[test_sprite].init(invtest, -1.5f + 0.66f*inv_formation[2].x, 2 - 0.5f*inv_formation[2].y, 0.25f, 0.25f);
+		 */
 
 		  // set the border to white for clarity
 		  GLuint white = resource_dict::get_texture_handle(GL_RGB, "#ffffff");
@@ -683,6 +759,10 @@ namespace octet {
 		  sprites[first_border_sprite + 1].init(white, 0, 3, 6, 0.2f);
 		  sprites[first_border_sprite + 2].init(white, -3, 0, 0.2f, 6);
 		  sprites[first_border_sprite + 3].init(white, 3, 0, 0.2f, 6);
+
+//		  sprites[]
+
+			//  load_next_level();	//	To do: why: can't put here.   
 
 		  // use the missile texture
 		  GLuint missile = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/missile.gif");
@@ -765,7 +845,7 @@ namespace octet {
 		  explosion_change = 5;
 		  explosion_trigger = false;
 		  invader_velocity = 0.01f;
-		  live_invaderers = num_invaderers;
+		  live_invaderers = inv_sprites.size();
 		  num_lives = 3;
 		  game_over = false;
 		  game_clear = false;
@@ -774,10 +854,8 @@ namespace octet {
 		  score = 0;
 		  counter = 0;
 		  currentExplosion = 0;
-		  missile_trigger = false;
 		  startTimeCatcher = 0;
 		  startDisabled = 0;
-		  stage = 1;
 
 	  }
 
@@ -820,6 +898,11 @@ namespace octet {
 
 	  // this is called to draw the world
 	  void draw_world(int x, int y, int w, int h) {
+
+		  if (is_key_going_down(key_rmb)) {
+			  load_next_level();
+		  }
+
 		  simulate();
 
 		  // set a viewport - includes whole window area
@@ -835,6 +918,10 @@ namespace octet {
 		  // allow alpha blend (transparency when alpha channel is 0)
 		  glEnable(GL_BLEND);
 		  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		  for (int i = 0; i < inv_sprites.size(); ++i) {
+			  inv_sprites[i].render(texture_shader_, cameraToWorld);
+		  }
 
 		  // draw all the sprites
 		  for (int i = 0; i != num_sprites; ++i) {
@@ -868,5 +955,70 @@ namespace octet {
       vec4 &cpos = cameraToWorld.w();
       alListener3f(AL_POSITION, cpos.x(), cpos.y(), cpos.z());
     }
+
+	  void read_file() {
+		  printf("read_file start\n");
+		  std::string s1("inv_formation");
+		  std::string s2 = std::to_string(stage);
+		  std::string s3(".csv");
+		  //printf("%s%s%s\n",s1,s2,s3);
+		  //char s2 = static_cast<char>(stage);
+		  std::ifstream file(s1 + s2 + s3);//to do: how to change level
+												   //		std::ifstream file("inv_formation"+ std::to_string(stage)+".csv");
+
+		  printf("read csv file\n");
+		  inv_formation.resize(0);
+
+		  char buffer[2048];
+		  int i = 0;
+		  while (!file.eof()) {
+			  file.getline(buffer, sizeof(buffer));
+			  //printf("while loop \n");
+			  char *b = buffer;
+			  for (int j = 0;; ++j) {
+				  char *e = b;
+				  while (*e != 0 && *e != ',') {
+					  ++e;
+				  }
+
+				  if (std::atoi(b) == 1) {
+					  printf("found 1 \n");
+					  //inv_position p;
+					  current_invader_position.x = j;
+					  current_invader_position.y = i;
+					  inv_formation.push_back(current_invader_position);
+				  }
+				  else {
+					  printf("found 0 \n");
+				  }
+
+				  if (*e != ',') {
+					  break;
+				  }
+				  b = e + 1;
+			  }
+			  ++i;
+		  }
+
+	  }
+
+	  void load_next_level() {
+		  stage++;
+		  if (stage > MAX_NR_LVL) {
+			  return;
+			  // TODO: show you win screen
+		  }
+
+		  read_file();
+		  inv_sprites.resize(0);
+
+		  GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
+		  for (int i = 0; i < inv_formation.size(); ++i) {
+			  //sprite inv;
+			  sprite inv;
+			  inv.init(invaderer, -1.5f + 0.66f*inv_formation[i].x, 2 - 0.5f*inv_formation[i].y, 0.25f, 0.25f);
+			  inv_sprites.push_back(inv);
+		  }
+	  }
   };
 }
