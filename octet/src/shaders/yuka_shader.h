@@ -24,7 +24,7 @@ namespace octet {
 
 				void main() {
 					vec2 pos = gl_FragCoord.xy / resolution.xy;
-					vec3 color = vec3(0.6, 0.1, 0.3) * pos.y;
+					vec3 color = vec3(0.3, 0, 0.4) * pos.y;
 					gl_FragColor = vec4(color, 1.0);
 				}
 				);
@@ -42,4 +42,4 @@ namespace octet {
 			}
 		};
 	}
-}#pragma once
+}

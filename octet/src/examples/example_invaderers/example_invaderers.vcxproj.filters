@@ -430,6 +430,9 @@
     <ClInclude Include="invaderers_app.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\shaders\yuka_shader.h">
+      <Filter>shaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resources\mesh_builder.inl">

@@ -101,7 +101,34 @@ namespace octet {
 			// finally, draw the sprite (4 vertices)
 			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 		}
+		void render(yuka_shader &shader, mat4t &cameraToWorld, int v_width, int v_height) {
+			
+			mat4t modelToProjection = mat4t::build_projection_matrix(modelToWorld, cameraToWorld);
 
+			shader.render(modelToProjection, vec2(v_width, v_height));
+
+			float vertices[] = {
+				-halfWidth, -halfHeight, 0,
+				halfWidth, -halfHeight, 0,
+				halfWidth,  halfHeight, 0,
+				-halfWidth,  halfHeight, 0,
+			};
+
+			glVertexAttribPointer(attribute_pos, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)vertices);
+			glEnableVertexAttribArray(attribute_pos);
+
+			static const float uvs[] = {
+				0,  0,
+				1,  0,
+				1,  1,
+				0,  1,
+			};
+
+			glVertexAttribPointer(attribute_uv, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)uvs);
+			glEnableVertexAttribArray(attribute_uv);
+
+			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		}
 		// move the object
 		void translate(float x, float y) {
 			modelToWorld.translate(x, y, 0);
@@ -147,9 +174,10 @@ namespace octet {
 
 		// shader to draw a textured triangle
 		texture_shader texture_shader_;
+		yuka_shader yuka_shader_;
 
 		enum {
-			num_sound_sources = 8,
+			num_sound_sources = 12,
 			num_bigstar = 10,
 			num_middlestar = 15,
 			num_smallstar = 20,
@@ -207,7 +235,7 @@ namespace octet {
 
 		};
 
-		sprite killed_invaderer_sprite;
+		
 
 		// timers for missiles and bombs
 		int missiles_disabled;
@@ -218,6 +246,9 @@ namespace octet {
 		int autoMove_abled;
 		int startDisabled;
 		int startTimeCatcher;
+		// stores current level
+		int stage;
+		static const int MAX_NR_LVL = 3;
 
 		//bool for triggers
 		bool explosion_trigger;
@@ -234,9 +265,7 @@ namespace octet {
 		bool game_complete;
 
 		long int score;
-		// int stage;
-
-
+	
 		// speed of enemy
 		float invader_velocity;
 
@@ -247,13 +276,18 @@ namespace octet {
 		ALuint pon;
 		ALuint begin;
 		ALuint end;
+		ALuint clapping;
+		ALuint bgm;
+		int bgmPlayer;
 		unsigned cur_source;
 		ALuint sources[num_sound_sources];
 
-		sprite heart[5];
-		dynarray<sprite> inv_sprites;
 		// big array of sprites
 		sprite sprites[num_sprites];
+		sprite background_sprite;
+		sprite heart[5];
+		sprite killed_invaderer_sprite;
+		dynarray<sprite> inv_sprites;
 
 		// random number generator
 		class random randomizer;
@@ -264,11 +298,8 @@ namespace octet {
 		// information for our text
 		bitmap_font font;
 
-		// stores current level
-		//	  int current_level = 0;
-		int stage;
-		static const int MAX_NR_LVL = 5;
-
+	
+		//invaderer positions
 		struct inv_position {
 			int x;
 			int y;
@@ -286,6 +317,8 @@ namespace octet {
 
 			if (game_play) {
 				sprites[title_sprite].translate(20, 0);
+				sprites[black_sprite].translate(20, 0);
+				
 				return;
 			}
 			else
@@ -295,15 +328,23 @@ namespace octet {
 			}
 			if (is_key_down(key_f5)) {
 				startTimeCatcher = startDisabled;
-				if (game_complete != true) {
+				if (game_play != true) {
 					ALuint source = get_sound_source();
 					alSourcei(source, AL_BUFFER, begin);
 					alSourcePlay(source);
 				}
 			}
 			if (startTimeCatcher - 1 == startDisabled) {
+				if (game_play) {
+					
+				}
+
 				if (game_over) {
+					stage = 0;
 					app_init();
+				
+
+					
 				}
 				if (game_clear) {
 					float inherit_velocity = abs(invader_velocity);
@@ -315,8 +356,18 @@ namespace octet {
 					num_lives = inherit_lives;
 					printf("stage clear\n");
 
+					ALuint source = get_sound_source();
+					alSourcei(source, AL_BUFFER, begin);
+					alSourcePlay(source);
+
+
 					// load_next_level();
 
+				}
+				if (game_complete) {
+					stage = 0;
+					app_init();
+					
 				}
 				game_title = false;
 				game_clear = false;
@@ -343,6 +394,9 @@ namespace octet {
 
 				if (stage >= MAX_NR_LVL) {
 					sprites[complete_sprite].translate(-20, 0);
+					ALuint source = get_sound_source();
+					alSourcei(source, AL_BUFFER, end);
+					alSourcePlay(source);
 					game_play = false;
 					game_complete = true;
 
@@ -351,12 +405,12 @@ namespace octet {
 
 				game_play = false;
 				game_clear = true;
-				sprites[game_clear_sprite].translate(-20, 0);
+				//sprites[game_clear_sprite].translate(-20, 0);
 
 				printf("stage clear!!\n");
 
 				ALuint source = get_sound_source();
-				alSourcei(source, AL_BUFFER, begin);
+				alSourcei(source, AL_BUFFER, clapping);
 				alSourcePlay(source);
 			}
 		}
@@ -380,6 +434,7 @@ namespace octet {
 				ALuint source = get_sound_source();
 				alSourcei(source, AL_BUFFER, end);
 				alSourcePlay(source);
+			
 			}
 
 			autoMove_abled = 32;
@@ -686,6 +741,7 @@ namespace octet {
 		// this is called once OpenGL is initialized
 		void app_init() {
 			// set up the shader
+			yuka_shader_.init();
 			texture_shader_.init();
 			printf("relieved\n");
 			// set up the matrices with a camera 5 units from the origin
@@ -694,64 +750,26 @@ namespace octet {
 
 			font_texture = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
 
-			GLuint title = resource_dict::get_texture_handle(GL_RGB, "#assets/invaderers/title2.gif");
-			sprites[title_sprite].init(title, 0, 0, 3, 3);
+			GLuint title = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/title2.gif");
+			sprites[title_sprite].init(title, 0, 0, 4, 1.5f);
 
-			GLuint complete = resource_dict::get_texture_handle(GL_RGB, "#assets/invaderers/complete.gif");
-			sprites[complete_sprite].init(complete, 20, 0, 6, 6);
+			GLuint complete = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/complete.gif");
+			sprites[complete_sprite].init(complete, 20, 0, 5, 2.5f);
 
 			GLuint ship = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/ship.gif");
-			sprites[ship_sprite].init(ship, 0, -2.75f, 0.25f, 0.25f);
+			sprites[ship_sprite].init(ship, 0, -1.75f, 0.25f, 0.25f);
 
 			GLuint GameOver = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/GameOver.gif");
-			sprites[game_over_sprite].init(GameOver, 20, 0, 2.5f, 2.5f);
+			sprites[game_over_sprite].init(GameOver, 20, 0, 3, 1);
 
 			GLuint GameClear = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/GameClear.gif");
 			sprites[game_clear_sprite].init(GameClear, 20, 0, 2.5f, 2.5f);
-			/*
-			GLuint Heart = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/heart.gif");
-			sprite heart_sprite;
-			heart[2].init(Heart, 0, 0, 0.2f, 0.2f);
-			*/
-			// // big array of sprites
-			// sprite sprites[num_sprites];
-
-			/*
-
-			GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
-			for (int j = 0; j != num_rows; ++j) {
-			for (int i = 0; i != num_cols; ++i) {
-			assert(first_invaderer_sprite + i + j*num_cols <= last_invaderer_sprite);
-			sprites[first_invaderer_sprite + i + j*num_cols].init(
-			invaderer, ((float)i - num_cols * 0.5f) * 0.5f, 2.50f - ((float)j * 0.5f), 0.25f, 0.25f
-			);
-			}
-			}
-
-			*/
-			/*
-			read_file(); //
-			inv_sprites.resize(0);
-			for (int i = 0; i < inv_formation.size(); ++i) {
-			printf("inv_formation%d x = %d y = %d \n", i, inv_formation[i].x, inv_formation[i].y);
-			}
-			GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
-			for (int i = 0; i < inv_formation.size(); ++i) {
-			printf("formationsize = %d",inv_formation.size());
-			sprite inv;
-			inv.init(invaderer, -1.5f + 0.66f*inv_formation[i].x, 2 - 0.5f*inv_formation[i].y, 0.25f, 0.25f);
-			inv_sprites.push_back(inv);
-			}
-			*/
+		
 			if (stage <1 || stage > MAX_NR_LVL) {
 				printf("stage = 0");
 				stage = 0;
 			}
 			load_next_level();
-			/*
-			GLuint invtest = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
-			sprites[test_sprite].init(invtest, -1.5f + 0.66f*inv_formation[2].x, 2 - 0.5f*inv_formation[2].y, 0.25f, 0.25f);
-			*/
 
 			// set the border to white for clarity
 			GLuint white = resource_dict::get_texture_handle(GL_RGB, "#ffffff");
@@ -759,6 +777,11 @@ namespace octet {
 			sprites[first_border_sprite + 1].init(white, 0, 3, 6, 0.2f);
 			sprites[first_border_sprite + 2].init(white, -3, 0, 0.2f, 6);
 			sprites[first_border_sprite + 3].init(white, 3, 0, 0.2f, 6);
+			GLuint black = resource_dict::get_texture_handle(GL_RGB, "#000000");
+			sprites[black_sprite].init(black, 0, 0, 6, 6);
+
+			GLuint green = resource_dict::get_texture_handle(GL_RGB, "#ff0000");
+			background_sprite.init(green, 0, 0, 6, 6);
 
 			//		  sprites[]
 
@@ -823,7 +846,7 @@ namespace octet {
 			for (int j = 0; j != num_explosions; ++j) {
 				for (int i = 0; i < num_explosionsAnim; ++i) {
 					// create explosions off-screen
-					sprites[first_explosion_sprite + i + num_explosions*j].init(explosion[i], 0.2*i, 0.2*j, 0.25f, 0.25f);//0.2*i, 0.2*j, 0.25f,0.25f
+					sprites[first_explosion_sprite + i + num_explosions*j].init(explosion[i], 20*i, 20*j, 0.25f, 0.25f);//0.2*i, 0.2*j, 0.25f,0.25f
 					sprites[first_explosion_sprite + i + num_explosions*j].is_enabled() = false;
 				}
 			}
@@ -834,7 +857,9 @@ namespace octet {
 			biing = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/biing.wav");
 			pon = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/pon.wav");
 			begin = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/begin.wav");
-			end = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/end.wav");
+			end = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/lose.wav");
+			clapping = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/clapping.wav");
+			bgm = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/bgm.wav");
 			cur_source = 0;
 			alGenSources(num_sound_sources, sources);
 
@@ -851,11 +876,13 @@ namespace octet {
 			game_clear = false;
 			game_play = false;
 			game_title = true;
+			game_complete = false;
 			score = 0;
 			counter = 0;
 			currentExplosion = 0;
 			startTimeCatcher = 0;
 			startDisabled = 0;
+			bgmPlayer = false;
 
 		}
 
@@ -919,6 +946,9 @@ namespace octet {
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+			// draw background
+			background_sprite.render(yuka_shader_, cameraToWorld, w, h);
+
 			for (int i = 0; i < inv_sprites.size(); ++i) {
 				inv_sprites[i].render(texture_shader_, cameraToWorld);
 			}
@@ -944,11 +974,16 @@ namespace octet {
 			if (game_clear) {
 				char clear_message[40];
 				sprintf(clear_message, "STAGE %d CLEAR !\nPress f5 to next", stage);
-				draw_text(texture_shader_, 0, -2, 1.0f / 256, clear_message);
+				draw_text(texture_shader_, 0, 0, 1.0f / 256, clear_message);
 			}
 			if (game_over) {
 				char score_text[40];
 				sprintf(score_text, "press f5 to try again", score, num_lives);
+				draw_text(texture_shader_, 0, -2.3, 1.0f / 256, score_text);
+			}
+			if (game_complete) {
+				char score_text[40];
+				sprintf(score_text, "press f5 to try again");
 				draw_text(texture_shader_, 0, -2.3, 1.0f / 256, score_text);
 			}
 			// move the listener with the camera
