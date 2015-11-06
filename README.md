@@ -1,11 +1,11 @@
 # octet
 
 This repository was forked from andy-thomason/octet and I hacked it for an assignment for MA Computer Games Art and Design in Autumn term in 2015. This document will include how I changed the codes in Octet and what I learned from this.
-I'll firstly show demo play and then explain about it following the instruction that Andy mentioned in the website (http://andy-thomason.github.io/lecture_notes/assignments_2015-2016.html)
+I'll firstly show demo play and then explain about it following the instruction that Andy mentioned in the [website](http://andy-thomason.github.io/lecture_notes/assignments_2015-2016.html)
 
 ###1.Demo in Youtube
 
-I made many mechanics and you can check them with the demo movie.
+I made many mechanics and you can check them with the [demo](https://youtu.be/NnEBeQAKjJc) movie.
 - Added an artwork of dot-picture in the title screen instead of showing the game title of "invaderes".
 - Added the screen of title and game complete
 - Also added game statement. It has 3 stages and the player can play the game again and again.
@@ -18,9 +18,8 @@ I made many mechanics and you can check them with the demo movie.
 - Change score system. When the ship fires, the missile beats the invader, and the player clears each stage, the score will be increased
 
 ###2. Writing your own fragment shader
-I added one file for fragment shader which is yuka_shader.h I extracted some codes from the texture_shader.h that had already exsisted. This is simple gradation and is shown the basic background during the game. 
+I added one file for fragment shader which is yuka_shader.h I extracted some codes from the texture_shader.h that had already exsisted. This is simple gradation and is shown the [basic background](https://www.dropbox.com/s/sch73tr90d5iz82/5.png?dl=0)  during the game. 
 
-[basic background](https://www.dropbox.com/s/sch73tr90d5iz82/5.png?dl=0) 
 
 ###3. Well-formatted code with good layout.
 Please look the codes.
