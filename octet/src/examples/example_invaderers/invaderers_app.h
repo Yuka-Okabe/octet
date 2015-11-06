@@ -671,7 +671,7 @@ namespace octet {
 			// set up the shader
 			yuka_shader_.init();
 			texture_shader_.init();
-
+			
 			// set up the matrices with a camera 5 units from the origin
 			cameraToWorld.loadIdentity();
 			cameraToWorld.translate(0, 0, 3);
