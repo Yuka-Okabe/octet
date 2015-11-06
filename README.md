@@ -65,7 +65,7 @@ I prepared a CSV file with 1 & 0 written that shows an appearance of an invader 
     }
   
   
-  These two are exactly the same except the name of the bool, but  should be different more. However, unfortunately it's beyond my knowledge to fix it. When I changed the last value of zero to one, it seeded it had fixed, but I don't have any confident if it was a right way. 
+  These two are exactly the same except the name of the bool, but  should be different more. However, unfortunately it's beyond my knowledge to fix it. I just note that when I changed the last value of zero to one, it seemed to have fixed.
  
- ###6.Summery   
+ ###6. Summery   
     To sum up, I changed the simple shooting game into multi-stage game which can provide player with fun by scoring system, SE, and artwork by using basical C++, fragment shader, and CSV file.  Now I can imagine how they made great games like 沙羅曼蛇 <https://www.youtube.com/watch?v=o8nv51f4vh0> and Hector87 <https://www.youtube.com/watch?v=23w9-WNq_1Q> .　By learning these games, I would be able to add life gauge, invaderes that move differently and come from above the screen, add more fascinating vidual effect, and so on. Additionally, I thought I can generate bgm using CSV file as a music score with informaion of pitch and duration if I knew how to generate simple sine wave using C++. These ideas will be put off for next challenge of learning.
