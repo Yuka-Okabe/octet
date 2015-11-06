@@ -43,14 +43,16 @@ I prepared a CSV file with 1 & 0 written that shows an appearance of an invader 
 
 ###5. Algorithms and problem solving
   (a)Making animation of stars   
-    I placed small stars that are far from the ship, middle stars, and big stars that are near from the ship as objects close to the subject should be big in the view of perspective. Then, set the speed respectively. Far stars should move slower, and vice varsa in perspective. Also, I set the place of the stars randomly. When the stars get out of the screen, they go back to random place above the screen and appear again. I did it because if a same background picture comes again and again the players notice the algorithms easily and that makes them bored. 
+    I placed small stars that are far from the ship, middle stars, and big stars that are near from the ship as objects close to the subject should be big in the view of perspective. Then, set the speed respectively. Far stars should move slower, and vice varsa in perspective. Also, I set the place of the stars randomly. When the stars get out of the screen, they go back to random place above the screen and appear again. I did it because if a same background picture comes again and again the players notice the algorithms easily and that makes them bored.   
+    
   (b)Making animation of explosion  
-  In order to emphasis the fun experience that is player succeded in beating an inveder, the animation of explosion(and SE) would be very effective. The Algorithms are the following
-- When the missile hit the enemy, 8 gif pictures come to the same place as the invader killed and change their status to "true ". The order of the picture is that earlier stage of the explosion is closer to the top. At the same time, there is function that is always searching for explosion sprite of the first stage whose status is "true". If it finds it, it remove the sprite out of the screen and the rest of 7 sprites 1 by 1.  Consequently, 8 frame animation show up on the screen.
+  In order to emphasis the fun experience that is player succeded in beating an inveder, the animation of explosion(and SE) would be very effective. The Algorithms are the following. When the missile hit the enemy, 8 gif pictures come to the same place as the invader killed and change their status to "true ". The order of the picture is that earlier stage of the explosion is closer to the top. At the same time, there is function that is always searching for explosion sprite of the first stage whose status is "true". If it finds it, it remove the sprite out of the screen and the rest of 7 sprites 1 by 1.  Consequently, 8 frame animation show up on the screen.
+  
   (c)Learning C++  
-     Let me note that I didn't know anything about C++ and didn't know many math terms in English, so I began reading a book for C++ beginner and got some idea. It was the biggest problem solving for me, but I know I'm still very beginner who needs learning more. 
+  Let me note that I didn't know anything about C++ and didn't know many math terms in English, so I began reading a book for C++ beginner and got some idea. It was the biggest problem solving for me, but I know I'm still very beginner who needs learning more.   
+     
  (d) About the Key command  
-I found that "is_key_going_up" works the same as "is_key_going_down". Then I checked app_common.h and there was codes like the following
+ I found that "is_key_going_up" works the same as "is_key_going_down". Then I checked app_common.h and there was codes like the following
 
     /// returns true if a key has gone down this frame
     bool is_key_going_down(unsigned key) {
@@ -61,6 +63,7 @@ I found that "is_key_going_up" works the same as "is_key_going_down". Then I che
     bool is_key_going_up(unsigned key) {
       return keys[key & 0xff] != 0 && prev_keys[key & 0xff] == 0;
     }
+  
   
   These two are exactly the same except the name of the bool, but  should be different more. However, unfortunately it's beyond my knowledge to fix it. When I changed the last value of zero to one, it seeded it had fixed, but I don't have any confident if it was a right way. 
  
