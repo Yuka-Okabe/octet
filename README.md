@@ -34,9 +34,7 @@ I made 3 CSV files in which 1 and 0 are written that include the positions of th
 
 
 (b) Setting up an artwork in the title screen  
-After learning how to read CSV file and making a fragment shader file, I decided to combine them and create something new that can show my originarity. Then, I tryed making a big dot-picture of a invader and put it into the title screen.
-
-[title screen](https://www.dropbox.com/s/et0fcs8gnyv5we9/1.png?dl=0)
+After learning how to read CSV file and making a fragment shader file, I decided to combine them and create something new that can show my originarity. Then, I tryed making a big dot-picture of a invader and put it into the [title screen](https://www.dropbox.com/s/et0fcs8gnyv5we9/1.png?dl=0)
 
 I prepared a CSV file with 1 & 0 written that shows an appearance of an invader by dots. The program reads the CSV file and render squares with my file for fragment shader. Because it renders everyframe with different values for color, the picture's color changes every frame.
 
