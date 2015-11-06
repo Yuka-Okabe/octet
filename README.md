@@ -20,6 +20,8 @@ I made many mechanics and you can check them with the demo movie.
 2. Writing your own fragment shader
 I added one file for fragment shader which is yuka_shader.h I extracted some codes from the texture_shader.h that had already exsisted. This is simple gradation and is shown the basic background during the game. 
 
+[basic background](https://www.dropbox.com/s/m7p02k32j6l8icg/2.png?dl=0) 
+
 3. Well-formatted code with good layout.
 Please look the codes.
 
@@ -27,14 +29,15 @@ Please look the codes.
 (a) Setting up the formation of invaderers
 I made 3 CSV files in which 1 and 0 are written that include the positions of the invederers. This game has 3 stages and in each stage it reads different CSV files.
 
-![alt text](http://path/to/img.jpg)
-![alt text](http://path/to/img.jpg)
-![alt text](http://path/to/img.jpg)
+[stage1](https://www.dropbox.com/s/m7p02k32j6l8icg/2.png?dl=0)  
+[stage2](https://www.dropbox.com/s/abt2swlreiwvc89/3.png?dl=0)  
+[stage3](https://www.dropbox.com/s/w9xpp7z8iifdqo8/4.png?dl=0)  
+
 
 (b) Setting up an artwork in the title screen
-After learning how to read CSV file and making a fragment shader file, I decided to combine them and create something new that can show my originarity. Then, I tryed making a big dot-picture of a invader and put it into the title screen. 
+After learning how to read CSV file and making a fragment shader file, I decided to combine them and create something new that can show my originarity. Then, I tryed making a big dot-picture of a invader and put it into the title screen.
 
-![alt text](https://www.dropbox.com/s/sch73tr90d5iz82/5.png?dl=0)
+[title screen](https://www.dropbox.com/s/sch73tr90d5iz82/5.png?dl=0)
 
 I prepared a CSV file with 1 & 0 written that shows an appearance of an invader by dots. The program reads the CSV file and render squares with my file for fragment shader. Because it renders everyframe with different values for color, the picture's color changes every frame.
 
