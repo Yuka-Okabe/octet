@@ -20,8 +20,6 @@ I made many mechanics and you can check them with the demo movie.
 2. Writing your own fragment shader
 I added one file for fragment shader which is yuka_shader.h I extracted some codes from the texture_shader.h that had already exsisted. This is simple gradation and is shown the basic background during the game. 
 
-- pic - 
-
 3. Well-formatted code with good layout.
 Please look the codes.
 
@@ -35,6 +33,8 @@ I made 3 CSV files in which 1 and 0 are written that include the positions of th
 
 (b) Setting up an artwork in the title screen
 After learning how to read CSV file and making a fragment shader file, I decided to combine them and create something new that can show my originarity. Then, I tryed making a big dot-picture of a invader and put it into the title screen. 
+
+
 
 I prepared a CSV file with 1 & 0 written that shows an appearance of an invader by dots. The program reads the CSV file and render squares with my file for fragment shader. Because it renders everyframe with different values for color, the picture's color changes every frame.
 
@@ -61,4 +61,4 @@ I found that "is_key_going_up" works the same as "is_key_going_down". Then I che
   
   These two are exactly the same except the name of the bool, but  should be different more. However, unfortunately it's beyond my knowledge to fix it. When I changed the last value of zero to one, it seeded it had fixed, but I don't have any confident if it was a right way. 
     
-    To some up, I changed the simple shooting game into multi-stage game which can provide player with fun by scoring system, SE, and artwork by using basical C++, fragment shader, and CSV file.  Now I can imagine how they made great games like 沙羅曼蛇 https://www.youtube.com/watch?v=o8nv51f4vh0 and Hector87 https://www.youtube.com/watch?v=23w9-WNq_1Q .　By learning these games, I would be able to add life gauge, invaderes that move differently and come from above the screen, and so on. Additionally, I thought I can generate bgm using CSV file as a music score with informaion of pitch and duration if I knew how to generate simple sine wave using C++. These ideas will be put off for next challenge of learning.
+    To some up, I changed the simple shooting game into multi-stage game which can provide player with fun by scoring system, SE, and artwork by using basical C++, fragment shader, and CSV file.  Now I can imagine how they made great games like 沙羅曼蛇 <https://www.youtube.com/watch?v=o8nv51f4vh0> and Hector87 <https://www.youtube.com/watch?v=23w9-WNq_1Q> .　By learning these games, I would be able to add life gauge, invaderes that move differently and come from above the screen, add more fascinating vidual effect, and so on. Additionally, I thought I can generate bgm using CSV file as a music score with informaion of pitch and duration if I knew how to generate simple sine wave using C++. These ideas will be put off for next challenge of learning.
