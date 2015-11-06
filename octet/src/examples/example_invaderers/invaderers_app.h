@@ -19,20 +19,13 @@
 
 namespace octet {
 	class sprite {
-		// where is our sprite (overkill for a 2D game!)
+
 		mat4t modelToWorld;
-
-		// half the width of the sprite
 		float halfWidth;
-
-		// half the height of the sprite
 		float halfHeight;
-
-		// what texture is on our sprite
 		int texture;
-
-		// true if this sprite is enabled.
 		bool enabled;
+
 	public:
 		sprite() {
 			texture = 0;
@@ -47,30 +40,16 @@ namespace octet {
 			texture = _texture;
 			enabled = true;
 		}
-
-		void set_texture(int _texture) {               //THIS IS FOR CHANGING THE TEXTURES
-			texture = _texture;
-		} //added to do: wanna change or delate
-
+		
 		void render(texture_shader &shader, mat4t &cameraToWorld) {
-			// invisible sprite... used for gameplay.
 			if (!texture) return;
-
-			// build a projection matrix: model -> world -> camera -> projection
-			// the projection space is the cube -1 <= x/w, y/w, z/w <= 1
 			mat4t modelToProjection = mat4t::build_projection_matrix(modelToWorld, cameraToWorld);
 
-			// set up opengl to draw textured triangles using sampler 0 (GL_TEXTURE0)
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, texture);
 
-			// use "old skool" rendering
-			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			shader.render(modelToProjection, 0);
 
-			// this is an array of the positions of the corners of the sprite in 3D
-			// a straight "float" here means this array is being generated here at runtime.
 			float vertices[] = {
 				-halfWidth, -halfHeight, 0,
 				halfWidth, -halfHeight, 0,
@@ -78,13 +57,9 @@ namespace octet {
 				-halfWidth,  halfHeight, 0,
 			};
 
-			// attribute_pos (=0) is position of each corner
-			// each corner has 3 floats (x, y, z)
-			// there is no gap between the 3 floats and hence the stride is 3*sizeof(float)
 			glVertexAttribPointer(attribute_pos, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)vertices);
 			glEnableVertexAttribArray(attribute_pos);
 
-			// this is an array of the positions of the corners of the texture in 2D
 			static const float uvs[] = {
 				0,  0,
 				1,  0,
@@ -92,13 +67,9 @@ namespace octet {
 				0,  1,
 			};
 
-			// attribute_uv is position in the texture of each corner
-			// each corner (vertex) has 2 floats (x, y)
-			// there is no gap between the 2 floats and hence the stride is 2*sizeof(float)
 			glVertexAttribPointer(attribute_uv, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)uvs);
 			glEnableVertexAttribArray(attribute_uv);
 
-			// finally, draw the sprite (4 vertices)
 			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 		}
 		void render(yuka_shader &shader, mat4t &cameraToWorld, int v_width, int v_height) {
@@ -129,25 +100,20 @@ namespace octet {
 
 			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 		}
-		// move the object
+
 		void translate(float x, float y) {
 			modelToWorld.translate(x, y, 0);
 		}
 
-		// position the object relative to another.
 		void set_relative(sprite &rhs, float x, float y) {
 			modelToWorld = rhs.modelToWorld;
 			modelToWorld.translate(x, y, 0);
 		}
 
-		// return true if this sprite collides with another.
-		// note the "const"s which say we do not modify either sprite
 		bool collides_with(const sprite &rhs) const {
 			float dx = rhs.modelToWorld[3][0] - modelToWorld[3][0];
 			float dy = rhs.modelToWorld[3][1] - modelToWorld[3][1];
 
-			// both distances have to be under the sum of the halfwidths
-			// for a collision
 			return
 				(fabsf(dx) < halfWidth + rhs.halfWidth) &&
 				(fabsf(dy) < halfHeight + rhs.halfHeight)
@@ -168,35 +134,25 @@ namespace octet {
 	};
 
 	class invaderers_app : public octet::app {
-		// Matrix to transform points in our camera space to the world.
-		// This lets us move our camera
+	
 		mat4t cameraToWorld;
 
-		// shader to draw a textured triangle
 		texture_shader texture_shader_;
+		// myshader
 		yuka_shader yuka_shader_;
 
 		enum {
 			num_sound_sources = 12,
+			//Stars for background artwork
 			num_bigstar = 10,
 			num_middlestar = 15,
 			num_smallstar = 20,
-			// num_rows = 5,
-			//num_cols = 10,
 			num_missiles = 12,
 			num_bombs = 2,
 			num_borders = 4,
-			// num_invaderers = num_rows * num_cols,
 			num_explosionsAnim = 8,
 			num_explosions = 8,
-
-
-			// sprite definitions
-
 			ship_sprite = 0,
-
-
-
 
 			first_bigstar_sprite,
 			last_bigstar_sprite = first_bigstar_sprite + num_bigstar - 1,
@@ -207,8 +163,7 @@ namespace octet {
 			first_smallstar_sprite,
 			last_smallstar_sprite = first_smallstar_sprite + num_smallstar - 1,
 
-			//  first_invaderer_sprite,
-			//  last_invaderer_sprite = first_invaderer_sprite + num_invaderers - 1,
+			//this is sprite for debug
 			test_sprite,
 
 			first_missile_sprite,
@@ -226,18 +181,12 @@ namespace octet {
 			last_explosion_sprite = first_explosion_sprite + num_explosionsAnim*num_explosions - 1,
 
 			game_over_sprite,
-			game_clear_sprite,
-			title_sprite,
 			complete_sprite,
 
-
 			num_sprites,
-
 		};
 
-		
-
-		// timers for missiles and bombs
+		// timers
 		int missiles_disabled;
 		int bombs_disabled;
 		int explosion_change;
@@ -245,23 +194,25 @@ namespace octet {
 		int currentExplosion;
 		int autoMove_abled;
 		int startDisabled;
-		int startTimeCatcher;
+		int startTimeCatcher; 
+		int render_timer;
+		int randomColor;
 		// stores current level
 		int stage;
 		static const int MAX_NR_LVL = 3;
 
-		//bool for triggers
+		//bool for trigger
 		bool explosion_trigger;
 
 		// accounting for bad guys
 		int live_invaderers;
 		int num_lives;
 
-		// game state
-		bool game_over;
-		bool game_clear;
+		// game states
 		bool game_title;
 		bool game_play;
+		bool game_over;
+		bool game_clear;
 		bool game_complete;
 
 		long int score;
@@ -277,8 +228,7 @@ namespace octet {
 		ALuint begin;
 		ALuint end;
 		ALuint clapping;
-		ALuint bgm;
-		int bgmPlayer;
+		//ALuint bgm;
 		unsigned cur_source;
 		ALuint sources[num_sound_sources];
 
@@ -288,6 +238,7 @@ namespace octet {
 		sprite heart[5];
 		sprite killed_invaderer_sprite;
 		dynarray<sprite> inv_sprites;
+		dynarray<sprite> dot_sprites;
 
 		// random number generator
 		class random randomizer;
@@ -298,30 +249,37 @@ namespace octet {
 		// information for our text
 		bitmap_font font;
 
-	
 		//invaderer positions
 		struct inv_position {
 			int x;
 			int y;
 		};
+		//invaderer positions
+		struct dot_position {
+			int x;
+			int y;
+		};
 
 		inv_position current_invader_position;
+		dot_position current_dot_position;
 
 		dynarray<inv_position> inv_formation;
+		dynarray<dot_position> dot_formation;
 
 		ALuint get_sound_source() { return sources[cur_source++ % num_sound_sources]; }
 
-		//start to play when enter f5. Also make delay to start.
+		//this is called every frame 
+		//start to play when enter f5. also make delay to start.
 		void game_start() {
-			// printf("game_start\n");
-
 			if (game_play) {
-				sprites[title_sprite].translate(20, 0);
-				sprites[black_sprite].translate(20, 0);
-				
+				//disappear the title artwork and bankground during the game
+				for (int i = 0; i != dot_sprites.size(); i++) {
+					dot_sprites[i].translate(-20, 0);
+				}
+				sprites[black_sprite].translate(-20, 0);
 				return;
 			}
-			else
+			else //startDisabled is delay used when game state change from not playing to playing
 				startDisabled++;
 			if (startDisabled == 10) {
 				startDisabled = 0;
@@ -333,46 +291,34 @@ namespace octet {
 					alSourcei(source, AL_BUFFER, begin);
 					alSourcePlay(source);
 				}
-			}
+			} //after 10 frame when F5 is pusued, the game state changes
 			if (startTimeCatcher - 1 == startDisabled) {
-				if (game_play) {
-					
-				}
-
 				if (game_over) {
 					stage = 0;
-					app_init();
-				
-
-					
+					app_init();		
 				}
 				if (game_clear) {
-					float inherit_velocity = abs(invader_velocity);
-					int inherit_score = score;
-					int inherit_lives = num_lives;
-					app_init();//?????????????????????????????????
-					invader_velocity = inherit_velocity + 0.01f;
-					score = inherit_score + stage * 500 * stage;
-					num_lives = inherit_lives;
-					printf("stage clear\n");
+					//inherit paramators when game stage changes
+					float inherited_velocity = abs(invader_velocity);
+					int inherited_score = score;
+					int inherited_lives = num_lives;
+					app_init();
+					invader_velocity = inherited_velocity + 0.02f;
+					score = inherited_score + stage * 500 * stage; //add bonus score
+					num_lives = inherited_lives;
 
 					ALuint source = get_sound_source();
 					alSourcei(source, AL_BUFFER, begin);
 					alSourcePlay(source);
-
-
-					// load_next_level();
-
 				}
 				if (game_complete) {
 					stage = 0;
-					app_init();
-					
+					app_init();			
 				}
 				game_title = false;
 				game_clear = false;
 				game_over = false;
-
+				game_complete = false;
 
 				game_play = true;
 				startTimeCatcher = 0;
@@ -382,21 +328,23 @@ namespace octet {
 
 		// called when we hit an enemy
 		void on_hit_invaderer() {
-			printf("onHitInv\n");
+			//printf("onHitInv\n");
 			ALuint source = get_sound_source();
 			alSourcei(source, AL_BUFFER, bang);
 			alSourcePlay(source);
 
 			live_invaderers--;
-			score = score + 20;
+			score = score + 20; //add scores
 
 			if (live_invaderers == 0) {
 
 				if (stage >= MAX_NR_LVL) {
 					sprites[complete_sprite].translate(-20, 0);
+					
 					ALuint source = get_sound_source();
 					alSourcei(source, AL_BUFFER, end);
 					alSourcePlay(source);
+					
 					game_play = false;
 					game_complete = true;
 
@@ -405,20 +353,16 @@ namespace octet {
 
 				game_play = false;
 				game_clear = true;
-				//sprites[game_clear_sprite].translate(-20, 0);
-
-				printf("stage clear!!\n");
-
+			
 				ALuint source = get_sound_source();
 				alSourcei(source, AL_BUFFER, clapping);
 				alSourcePlay(source);
 			}
 		}
 
-		// called when we are hit
 		void on_hit_ship() {
 
-			//printf("on hit ship\n");
+			//when ship die, move it to the first place in order to let player know it died
 			sprites[ship_sprite].set_relative(sprites[first_border_sprite], 0, 0);
 
 			ALuint source = get_sound_source();
@@ -436,18 +380,16 @@ namespace octet {
 				alSourcePlay(source);
 			
 			}
-
-			autoMove_abled = 32;
+			autoMove_abled = 32; //see the following method
 		}
-
+		//when ship dies the ship not only move to the first place, it moves straight automatically during 32frame
 		void auto_move_ship() {
 			if (autoMove_abled) {
 				sprites[ship_sprite].translate(0, 0.05f);
-
 				autoMove_abled--;
 			}
 		}
-		//randomly places stars and move them
+		//stars exist random place and move different speed depending on the size(how far from the ship)
 		void auto_move_stars() {
 
 			float bigStar_speed = -0.01f;
@@ -455,9 +397,10 @@ namespace octet {
 			float smallStar_speed = -0.005f;
 
 			for (int i = 0; i != num_bigstar; i++) {
+				//move bigstars
 				sprites[first_bigstar_sprite + i].translate(0, bigStar_speed);
+				//when stars are out of the screen they move back to random places that is upside greater than screensize and less than screensize*2
 				if (sprites[first_bigstar_sprite + i].collides_with(sprites[first_border_sprite])) {
-					//printf("collide\n");
 					float randomBackx = randomizer.get(0, 60) / 10.0f;
 					float randomBacky = randomizer.get(0, 60) / 10.0f + 6.0f;
 					sprites[first_bigstar_sprite + i].set_relative(sprites[first_border_sprite], -3, 0);
@@ -522,19 +465,15 @@ namespace octet {
 					on_hit_ship();
 				}
 			}
-
 		}
 
 		// fire button (space)
 		void fire_missiles() {
 			if (is_key_down(' ')) {
-				//printf("down\n");
 				if (missiles_disabled) {
 					--missiles_disabled;
 				}
 				else {
-					//printf("fire\n");
-
 					for (int i = 0; i != num_missiles; ++i) {
 						if (!sprites[first_missile_sprite + i].is_enabled()) {
 							sprites[first_missile_sprite + i].set_relative(sprites[ship_sprite], 0, 0.5f);
@@ -553,8 +492,7 @@ namespace octet {
 			}
 		}
 
-
-		// pick and invader and fire a bomb
+		// pick invader and fire a bomb
 		void fire_bombs() {
 			if (bombs_disabled) {
 				--bombs_disabled;
@@ -595,7 +533,7 @@ namespace octet {
 						sprite &ship = sprites[ship_sprite];
 
 						if (invaderer.is_enabled() && missile.collides_with(invaderer)) {
-							printf("collide\n");
+
 							killed_invaderer_sprite = inv_sprites[j];
 							invaderer.is_enabled() = false;
 							invaderer.translate(20, 0);
@@ -604,22 +542,19 @@ namespace octet {
 							explosion_trigger = true;
 							on_hit_invaderer();
 
-							//
-							//??????????
-							// find explosions
 							for (int i = 0; i != num_explosions*num_explosionsAnim; i++) {
 								sprites[first_explosion_sprite + i].is_enabled() = false;
 							}
-
+							//8 explosions can exist at the same time so if it exceeds 8 it needs to be back 0
 							if (currentExplosion >= num_explosions) {
 								currentExplosion = 0;
 							}
-
+							//move 8 frames of explosion sprite 
 							for (int i = 0; i != num_explosionsAnim; i++) {
 								sprites[first_explosion_sprite + num_explosionsAnim * currentExplosion + i].set_relative(killed_invaderer_sprite, 0, 0);
 								sprites[first_explosion_sprite + num_explosionsAnim * currentExplosion + i].is_enabled() = true;
 							}
-
+							//what number of explosion will be used to the next time
 							currentExplosion++;
 
 							goto next_missile;
@@ -668,18 +603,17 @@ namespace octet {
 		}
 		//animate the explosion
 		void anim_explosion() {
+			//animate them 1 frame by 1 frame 
 			if (explosion_change) {
 				explosion_change--;
 			}
 			else
 			{
-				// printf("called");
 				if (counter >= num_explosions) {
 					counter = 0;
 				}
 				for (int i = 0; i != num_explosions; ++i) {
 					sprite &explosion = sprites[first_explosion_sprite + i*num_explosionsAnim];
-
 					sprites[first_explosion_sprite + i*num_explosionsAnim + counter].translate(20, 0);
 				}
 				counter++;
@@ -705,13 +639,6 @@ namespace octet {
 			modelToWorld.translate(x, y, 0);
 			modelToWorld.scale(scale, scale, 1);
 			mat4t modelToProjection = mat4t::build_projection_matrix(modelToWorld, cameraToWorld);
-
-			/*mat4t tmp;
-			glLoadIdentity();
-			glTranslatef(x, y, 0);
-			glGetFloatv(GL_MODELVIEW_MATRIX, (float*)&tmp);
-			glScalef(scale, scale, 1);
-			glGetFloatv(GL_MODELVIEW_MATRIX, (float*)&tmp);*/
 
 			enum { max_quads = 32 };
 			bitmap_font::vertex vertices[max_quads * 4];
@@ -740,19 +667,19 @@ namespace octet {
 
 		// this is called once OpenGL is initialized
 		void app_init() {
+
 			// set up the shader
 			yuka_shader_.init();
 			texture_shader_.init();
-			printf("relieved\n");
+
 			// set up the matrices with a camera 5 units from the origin
 			cameraToWorld.loadIdentity();
 			cameraToWorld.translate(0, 0, 3);
 
 			font_texture = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
-
-			GLuint title = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/title2.gif");
-			sprites[title_sprite].init(title, 0, 0, 4, 1.5f);
-
+		
+			load_dot_pic();
+			
 			GLuint complete = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/complete.gif");
 			sprites[complete_sprite].init(complete, 20, 0, 5, 2.5f);
 
@@ -761,14 +688,11 @@ namespace octet {
 
 			GLuint GameOver = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/GameOver.gif");
 			sprites[game_over_sprite].init(GameOver, 20, 0, 3, 1);
-
-			GLuint GameClear = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/GameClear.gif");
-			sprites[game_clear_sprite].init(GameClear, 20, 0, 2.5f, 2.5f);
 		
 			if (stage <1 || stage > MAX_NR_LVL) {
-				printf("stage = 0");
 				stage = 0;
 			}
+			
 			load_next_level();
 
 			// set the border to white for clarity
@@ -778,14 +702,13 @@ namespace octet {
 			sprites[first_border_sprite + 2].init(white, -3, 0, 0.2f, 6);
 			sprites[first_border_sprite + 3].init(white, 3, 0, 0.2f, 6);
 			GLuint black = resource_dict::get_texture_handle(GL_RGB, "#000000");
-			sprites[black_sprite].init(black, 0, 0, 6, 6);
-
-			GLuint green = resource_dict::get_texture_handle(GL_RGB, "#ff0000");
-			background_sprite.init(green, 0, 0, 6, 6);
-
-			//		  sprites[]
-
-			//  load_next_level();	//	To do: why: can't put here.   
+			//when it is between stages, background artword doesn't come to the screen
+			if (score < 10) {
+				sprites[black_sprite].init(black, 0, 0, 6, 6);
+			}
+			//this is green but will change depending on my shader file
+			GLuint hoge = resource_dict::get_texture_handle(GL_RGB, "#ff0000");
+			background_sprite.init(hoge, 0, 0, 6, 6);
 
 			// use the missile texture
 			GLuint missile = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/missile.gif");
@@ -808,7 +731,6 @@ namespace octet {
 				// create bombs off-screen
 				float randomx = randomizer.get(0, 54) / 10.0f - 3.0f;
 				float randomy = randomizer.get(0, 64) / 10.0f - 3.0f;
-				//printf("random x = %f, random y = %f\n", randomx, randomy);
 				sprites[first_smallstar_sprite + i].init(smallStar, randomx, randomy, 0.02f, 0.02f);//
 				sprites[first_smallstar_sprite + i].is_enabled() = true;
 			}
@@ -829,12 +751,9 @@ namespace octet {
 				sprites[first_bigstar_sprite + i].is_enabled() = true;
 			}
 
-
-
-
 			// use the explosion textures
 			GLuint explosion[num_explosionsAnim];
-			//flag
+			//prepare sprites for the animation
 			explosion[0] = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/explosion/0.gif");
 			explosion[1] = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/explosion/1.gif");
 			explosion[2] = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/explosion/2.gif");
@@ -859,7 +778,6 @@ namespace octet {
 			begin = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/begin.wav");
 			end = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/lose.wav");
 			clapping = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/clapping.wav");
-			bgm = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/bgm.wav");
 			cur_source = 0;
 			alGenSources(num_sound_sources, sources);
 
@@ -882,17 +800,16 @@ namespace octet {
 			currentExplosion = 0;
 			startTimeCatcher = 0;
 			startDisabled = 0;
-			bgmPlayer = false;
-
+			render_timer = 0;
+			randomColor = 400;
 		}
 
 		// called every frame to move things
 		void simulate() {
 
-			//when state is title
 			game_start();
-
-			if (game_over || game_clear || game_title) {
+			// the following methods will be called every frame only during game playing
+			if (!game_play) {
 				return;
 			}
 
@@ -931,6 +848,10 @@ namespace octet {
 			}
 
 			simulate();
+			render_timer++;
+			if (render_timer > 1000) {
+				render_timer = 0;
+			}
 
 			// set a viewport - includes whole window area
 			glViewport(x, y, w, h);
@@ -953,11 +874,19 @@ namespace octet {
 				inv_sprites[i].render(texture_shader_, cameraToWorld);
 			}
 
-			// draw all the sprites
+
+			// draw all the Andy's sprites
 			for (int i = 0; i != num_sprites; ++i) {
 				sprites[i].render(texture_shader_, cameraToWorld);
 			}
-
+			//get random every 8 frame
+			randomColor = render_timer % 50 *6 + 150;
+			
+			// draw title's sprite
+			for (int i = 0; i < dot_sprites.size(); ++i) {
+				dot_sprites[i].render(yuka_shader_, cameraToWorld, randomColor,randomColor);
+			}
+			//display statements and instruction messages
 			if (game_play || game_clear) {
 				char score_text[32];
 				sprintf(score_text, "lives: %d   score: %d", num_lives, score);
@@ -969,7 +898,7 @@ namespace octet {
 			if (game_title) {
 				char title_text[32];
 				sprintf(title_text, "press f5 to start", score, num_lives);
-				draw_text(texture_shader_, 0, -2.3, 1.0f / 256, title_text);
+				draw_text(texture_shader_, 0.2f, -1.7f, 1.0f / 256, title_text);
 			}
 			if (game_clear) {
 				char clear_message[40];
@@ -984,7 +913,7 @@ namespace octet {
 			if (game_complete) {
 				char score_text[40];
 				sprintf(score_text, "press f5 to try again");
-				draw_text(texture_shader_, 0, -2.3, 1.0f / 256, score_text);
+				draw_text(texture_shader_, 0, 0, 1.0f / 256, score_text);
 			}
 			// move the listener with the camera
 			vec4 &cpos = cameraToWorld.w();
@@ -992,17 +921,79 @@ namespace octet {
 		}
 
 		void read_file() {
-			printf("read_file start\n");
 			std::string s1("inv_formation");
 			std::string s2 = std::to_string(stage);
 			std::string s3(".csv");
-			//printf("%s%s%s\n",s1,s2,s3);
-			//char s2 = static_cast<char>(stage);
-			std::ifstream file(s1 + s2 + s3);//to do: how to change level
-											 //		std::ifstream file("inv_formation"+ std::to_string(stage)+".csv");
+			std::ifstream file(s1 + s2 + s3);
 
-			printf("read csv file\n");
 			inv_formation.resize(0);
+
+			char buffer[2048];
+			int i = 0;
+			while (!file.eof()) {
+				file.getline(buffer, sizeof(buffer));
+			
+				char *b = buffer;
+				for (int j = 0;; ++j) {
+					char *e = b;
+					while (*e != 0 && *e != ',') {
+						++e;
+					}
+
+					if (std::atoi(b) == 1) {
+						//printf("found 1 \n");
+						current_invader_position.x = j;
+						current_invader_position.y = i;
+						inv_formation.push_back(current_invader_position);
+					}
+					else {
+						//printf("found 0 \n");
+					}
+
+					if (*e != ',') {
+						break;
+					}
+					b = e + 1;
+				}
+				++i;
+			}
+		}
+
+		void load_next_level() {
+			stage++;
+			if (stage > MAX_NR_LVL) {
+				return;
+			}
+
+			read_file();
+			inv_sprites.resize(0);
+			//set different appearance of invaderes depending of the stage 
+			GLuint invaderer;
+			if (stage == 1) {
+				invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer1.gif");
+			}
+			else if (stage == 2) {
+				invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer2.gif");
+			}
+			else if (stage == 3) {
+				invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer3.gif");
+			}
+			for (int i = 0; i < inv_formation.size(); ++i) {
+				sprite inv;
+				inv.init(invaderer, -1.5f + 0.66f*inv_formation[i].x, 2 - 0.5f*inv_formation[i].y, 0.25f, 0.25f);
+				inv_sprites.push_back(inv);
+			}
+		}
+		void read_dot_file() {
+
+
+			//printf("read_file start\n");
+			std::string s1("dot_formation");
+			std::string s2 = std::to_string(randomizer.get(1, 3));
+			std::string s3(".csv");
+			std::ifstream file(s1 + s2 + s3);
+			//printf("file_name = %s%s%s\n",s1,s2,s3);
+			dot_formation.resize(0);
 
 			char buffer[2048];
 			int i = 0;
@@ -1017,14 +1008,12 @@ namespace octet {
 					}
 
 					if (std::atoi(b) == 1) {
-						printf("found 1 \n");
-						//inv_position p;
-						current_invader_position.x = j;
-						current_invader_position.y = i;
-						inv_formation.push_back(current_invader_position);
+					//	printf("found 1 \n");
+						current_dot_position.x = j;
+						current_dot_position.y = i;
+						dot_formation.push_back(current_dot_position);
 					}
 					else {
-						printf("found 0 \n");
 					}
 
 					if (*e != ',') {
@@ -1034,26 +1023,21 @@ namespace octet {
 				}
 				++i;
 			}
-
 		}
+		void load_dot_pic() {
+			
+			read_dot_file();
+			dot_sprites.resize(0);
 
-		void load_next_level() {
-			stage++;
-			if (stage > MAX_NR_LVL) {
-				return;
-				// TODO: show you win screen
-			}
-
-			read_file();
-			inv_sprites.resize(0);
-
-			GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
-			for (int i = 0; i < inv_formation.size(); ++i) {
-				//sprite inv;
-				sprite inv;
-				inv.init(invaderer, -1.5f + 0.66f*inv_formation[i].x, 2 - 0.5f*inv_formation[i].y, 0.25f, 0.25f);
-				inv_sprites.push_back(inv);
+			GLuint dots;
+			dots = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer1.gif");
+			if (score < 10) {
+				for (int i = 0; i < dot_formation.size(); ++i) {
+					sprite dot;
+					dot.init(dots, -1.9f + 0.38f*dot_formation[i].x, 2 - 0.38f*dot_formation[i].y, 0.35f, 0.35f);
+					dot_sprites.push_back(dot);
+				}
 			}
 		}
-	};
+};
 }
